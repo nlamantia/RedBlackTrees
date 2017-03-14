@@ -9,53 +9,62 @@ typedef struct Node {
 	struct Node *rightChild;
 } Node;
 
-void insert(Node **head, int value);
+void insert(Node **head, int value, int *size);
 
 int main(void) {
-	int value;
-	Node **root = NULL;
-	while (scanf("%d", &value)) {
-		insert(root, value);
+	char *color;
+	int value, *size = 0;
+	Node **root;
+	*root = NULL;
+	while (scanf("%d\n", &value) != EOF) {
+		printf("%d\n", value);
+		insert(root, value, size);
 	}
-
+	printf("Root: %d\tColor: %d\n", (*root)->data, (*root)->color);
+	printf("Right Child: %d\tColor: %d\n", (*root)->rightChild->data, (*root)->rightChild->color);
+	printf("Right Grandchild: %d\tColor: %d\n", (*root)->rightChild->rightChild->data, (*root)->rightChild->rightChild->color);
+	printf("Done\n");
 	return(0);
 }
 
-void insert(Node **head, int value) {
-	int valueFound = 0;
-	Node *traversePtr, *uncle, *current, *parent, *grandparent;
+void insert(Node **head, int value, int *size) {
+	int valueFound = 0, leafReached = 0;
+	Node *traversePtr, *uncle, *current, *parent, *grandparent, *gpp, *gp;
 	Node *newNode = malloc(sizeof(Node));
 
-	newNode->data  = value;
+	newNode->data = value;
 	newNode->color = 1;
 	newNode->parent = NULL;
 	newNode->leftChild = NULL;
 	newNode->rightChild = NULL;
 
-	if (head == NULL) {
+	if (*head == NULL) {
 		newNode->color = 0;
 		*head = newNode;
 	} else {
 		traversePtr = *head;
-		while (!valueFound) {
+		while (!valueFound && !leafReached) {
 			if (traversePtr->data == value) {
 				valueFound = 1;
 			} else if (traversePtr->data > value) {
 				if (traversePtr->leftChild != NULL) {
 					traversePtr = traversePtr->leftChild;
 				} else {				
-					valueFound = 1;
+					leafReached = 1;
 					traversePtr->leftChild = newNode;
 				}
 			} else {
 				if (traversePtr->rightChild != NULL) {
 					traversePtr = traversePtr->rightChild;
 				} else {
-					valueFound = 1;
+					leafReached = 1;
 					traversePtr->rightChild = newNode;
 				}
 			}
 		}
+		if (!valueFound) {
+		*(size)++;
+
 		newNode->parent = traversePtr;
 
 		current = newNode;
@@ -63,40 +72,125 @@ void insert(Node **head, int value) {
 		grandparent = parent->parent;
 
 		while (parent->color == 1) {
-			if (newNode->parent == newNode->parent->parent->leftChild) {
-				uncle = current->parent->parent->rightChild;
+			if (parent == grandparent->leftChild) {
+				uncle = grandparent->rightChild;
 			} else {
-				uncle = current->parent->parent->leftChild;
+				uncle = grandparent->leftChild;
 			}
 
 			while (uncle->color == 1) {
 				uncle->color = 0;
 				parent->color = 0;
+				
+				if (grandparent != *head) {
 				grandparent->color = 1;
 
 				current = grandparent;
 				parent = current->parent;
 				grandparent = parent->parent;
 
-				if (newNode->parent == newNode->parent->parent->leftChild) {
-					uncle = current->parent->parent->rightChild;
+				printf("Redesignating variables successful\n");
+
+				if (parent == grandparent->leftChild) {
+					uncle = grandparent->rightChild;
 				} else {
-					uncle = current->parent->parent->leftChild;
+					uncle = grandparent->leftChild;
 				}
+				} else break;
+			}
+
+			if (grandparent == *head) {
+				break;
 			}
 
 			while (uncle->color == 0) {
 				if (current == parent->leftChild &&  parent == grandparent->leftChild) {
-					
+					if (grandparent == grandparent->parent->leftChild) {
+						grandparent->parent->leftChild = parent;
+					} else {
+						grandparent->parent->rightChild = parent;
+					}
+					parent->parent = grandparent->parent;
+
+					grandparent->parent = parent;
+					grandparent->leftChild = parent->rightChild;
+					grandparent->leftChild->parent = grandparent;
+					parent->rightChild = grandparent;
+					parent->color = 0;
+					grandparent->color = 1;
 				} else if (current == parent->leftChild && parent == grandparent->rightChild) {
+					grandparent->rightChild = current;
+					current->parent = grandparent;
+
+					parent->leftChild = current->rightChild;					
+					current->rightChild = parent;
+					parent->parent = current;
+
+					current->parent = grandparent->parent;
+					if (grandparent == grandparent->parent->leftChild) {
+						grandparent->parent->leftChild = current;
+					} else {
+						grandparent->parent->rightChild = current;
+					}
 					
-				} else if (current == parent->rightChild && parent  == grandparent->leftChild) {
+					grandparent->rightChild = current->leftChild;
+					grandparent->rightChild->parent = grandparent;
+
+					current->leftChild = grandparent;
+					grandparent->parent = current;
+
+					current->color = 0;
+					grandparent->color = 1;
+				} else if (current == parent->rightChild && parent == grandparent->leftChild) {
+					grandparent->leftChild = current;
+					current->parent = grandparent;
+
+					parent->rightChild = current->leftChild;					
+					current->leftChild = parent;
+					parent->parent = current;
+
+					current->parent = grandparent->parent;
+					if (grandparent == grandparent->parent->leftChild) {
+						grandparent->parent->leftChild = current;
+					} else {
+						grandparent->parent->rightChild = current;
+					}
 					
+					grandparent->leftChild = current->rightChild;
+					grandparent->leftChild->parent = grandparent;
+
+					current->rightChild = grandparent;
+					grandparent->parent = current;
+
+					current->color = 0;
+					grandparent->color = 1;
 				} else {
-					
+					if (grandparent == grandparent->parent->leftChild) {
+						grandparent->parent->leftChild = parent;
+					} else {
+						grandparent->parent->rightChild = parent;
+					}
+					parent->parent = grandparent->parent;
+
+					grandparent->parent = parent;
+					grandparent->rightChild = parent->leftChild;
+					grandparent->rightChild->parent = grandparent;
+					parent->leftChild = grandparent;
+					parent->color = 0;
+					grandparent->color = 1;
+				}
+				parent = current->parent;
+				grandparent = parent->parent;
+				if (parent == grandparent->leftChild) {
+					uncle = grandparent->rightChild;
+				} else {
+					uncle = grandparent->leftChild;
 				}
 			}
 			
+		}
+		} else {
+			free(newNode);
 		}
 	}
 }
