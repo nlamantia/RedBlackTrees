@@ -14,17 +14,16 @@ void insert(Node **head, int value, int *size);
 int main(void) {
 	char *color;
 	int value, *size = 0;
-	Node **root;
-	*root = NULL;
+	Node *root = NULL;
 	while (scanf("%d\n", &value) != EOF) {
 		printf("%d\n", value);
-		insert(root, value, size);
+		insert(&root, value, size);
 	}
-	printf("Root: %d\tColor: %d\n", (*root)->data, (*root)->color);
-	printf("Left Child: %d\tColor: %d\n", (*root)->leftChild->data, (*root)->leftChild->color);
-	printf("Right Child: %d\tColor: %d\n", (*root)->rightChild->data, (*root)->rightChild->color);
-	printf("Right Grandchild: %d\tColor: %d\n", (*root)->rightChild->leftChild->data, (*root)->rightChild->leftChild->color);
-	printf("Left Grandchild: %d\tColor: %d\n", (*root)->leftChild->leftChild->data, (*root)->leftChild->leftChild->color);
+	printf("Root: %d\tColor: %d\n", (root)->data, (root)->color);
+	printf("Left Child: %d\tColor: %d\n", (root)->leftChild->data, (root)->leftChild->color);
+	printf("Right Child: %d\tColor: %d\n", (root)->rightChild->data, (root)->rightChild->color);
+	printf("Right Grandchild: %d\tColor: %d\n", (root)->rightChild->leftChild->data, (root)->rightChild->leftChild->color);
+	printf("Left Grandchild: %d\tColor: %d\n", (root)->leftChild->leftChild->data, (root)->leftChild->leftChild->color);
 	printf("Done\n");
 	return(0);
 }
