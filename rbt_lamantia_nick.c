@@ -9,15 +9,16 @@ typedef struct Node {
 	struct Node *rightChild;
 } Node;
 
-void insert(Node **head, int value, int *size);
+int insert(Node **head, int value);
+void freeAll(Node *head);
 
 int main(void) {
 	char *color;
-	int value, *size = 0;
+	int value, size = 0, sizeOfDataFile;
 	Node *root = NULL;
 	while (scanf("%d\n", &value) != EOF) {
 		printf("%d\n", value);
-		insert(&root, value, size);
+		size += insert(&root, value);
 	}
 	printf("Root: %d\tColor: %d\n", (root)->data, (root)->color);
 	printf("Left Child: %d\tColor: %d\n", (root)->leftChild->data, (root)->leftChild->color);
@@ -25,13 +26,20 @@ int main(void) {
 	printf("Right Grandchild: %d\tColor: %d\n", (root)->rightChild->leftChild->data, (root)->rightChild->leftChild->color);
 	printf("Left Grandchild: %d\tColor: %d\n", (root)->leftChild->leftChild->data, (root)->leftChild->leftChild->color);
 	printf("Done\n");
+	/*freeAll(root);*/
 	return(0);
 }
 
-void insert(Node **head, int value, int *size) {
+int insert(Node **head, int value) {
 	int valueFound = 0, leafReached = 0;
 	Node *traversePtr, *uncle, *current, *parent, *grandparent, *gpp, *gp;
 	Node *newNode = malloc(sizeof(Node));
+	if (newNode == NULL) {
+		printf("Error allocating memory.\n");
+		printf("Session terminated.\n");
+		exit(0);
+		return;
+	}
 
 	newNode->data = value;
 	newNode->color = 1;
@@ -42,9 +50,13 @@ void insert(Node **head, int value, int *size) {
 	if (*head == NULL) {
 		newNode->color = 0;
 		*head = newNode;
+		return 1;
 	} else {
 		traversePtr = *head;
+
+		/* Infinite loop in some conditions.  Check nested if else below. */
 		while (!valueFound && !leafReached) {
+			printf("Value: %d\n", traversePtr->data);
 			if (traversePtr->data == value) {
 				valueFound = 1;
 			} else if (traversePtr->data > value) {
@@ -63,8 +75,7 @@ void insert(Node **head, int value, int *size) {
 				}
 			}
 		}
-		if (!valueFound) {
-		*(size)++;
+		if (!valueFound) {		
 
 		newNode->parent = traversePtr;
 
@@ -72,7 +83,8 @@ void insert(Node **head, int value, int *size) {
 		parent = current->parent;
 		grandparent = parent->parent;
 
-		while (parent->color == 1 && grandparent != NULL) {
+		while (parent != NULL && parent->color == 1) {
+			printf("Hello\n");
 			if (parent == grandparent->leftChild) {
 				uncle = grandparent->rightChild;
 			} else {
@@ -80,6 +92,7 @@ void insert(Node **head, int value, int *size) {
 			}
 
 			if (uncle != NULL && uncle->color == 1) {
+				printf("Red Uncle\n");
 				if (uncle != NULL) {
 					uncle->color = 0;
 				}
@@ -97,7 +110,7 @@ void insert(Node **head, int value, int *size) {
 					} else break;
 				} else break;
 
-				if (grandparent != NULL && grandparent != *head) {
+				if (grandparent != NULL) {
 				if (parent == grandparent->leftChild) {
 					uncle = grandparent->rightChild;
 				} else {
@@ -108,7 +121,7 @@ void insert(Node **head, int value, int *size) {
 				}
 			} else if (uncle == NULL || uncle->color == 0) {
 				if (current == parent->leftChild && parent == grandparent->rightChild) {
-
+					printf("First if\n");
 					if (current->rightChild != NULL) {
 						current->rightChild->parent = parent;
 					}
@@ -140,8 +153,19 @@ void insert(Node **head, int value, int *size) {
 					}
 					grandparent->parent = current;
 					
-					break;
+					parent = current->parent;
+					if (parent != NULL) {
+						grandparent = parent->parent;
+						if (parent != *head) {
+							if (parent == grandparent->leftChild) {
+								uncle = grandparent->rightChild;
+							} else {
+								uncle = grandparent->leftChild;
+							}
+						}
+					} else break;
 				} else if (current == parent->rightChild && parent == grandparent->leftChild) {
+					printf("First else if\n");
 					parent->parent = current;
 
 					if (current->leftChild != NULL) {
@@ -157,12 +181,11 @@ void insert(Node **head, int value, int *size) {
 						current->rightChild->parent = grandparent;
 					}					
 					grandparent->leftChild = current->rightChild;
-					grandparent->parent = current;
 					current->rightChild = grandparent;
-
 					current->color = 0;
 					current->rightChild->color = 1;
 
+					printf("Just before checking if grandparent is root\n");
 					if (grandparent != *head) {					
 						if (grandparent == grandparent->parent->leftChild) {
 							grandparent->parent->leftChild = current;
@@ -170,19 +193,28 @@ void insert(Node **head, int value, int *size) {
 							grandparent->parent->rightChild = current;
 						}
 						current->parent = grandparent->parent;
-						current = grandparent;
-						parent = current->parent;
-						if (parent != NULL) {
-							grandparent = parent->parent;
-						} else {
-							break;
-						}
+						grandparent->parent = current;
 					} else {
+						grandparent->parent = current;
 						*head = current;
 						current->parent = NULL;
-						break;
-					}					
+					}
+					printf("Just after checking if grandparent is root\n");
+					parent = current->parent;
+					if (parent != NULL) {
+						printf("Inside the if statement\n");
+						grandparent = parent->parent;
+						if (grandparent != NULL) {
+							if (parent == grandparent->leftChild) {
+								uncle = grandparent->rightChild;
+							} else {
+								uncle = grandparent->leftChild;
+							}
+						} else break;
+					} else break;
+					printf("End first else if\n");
 				} else if (current == parent->leftChild && parent == grandparent->leftChild) {
+					printf("Second else if\n");
 					if (parent->rightChild != NULL) {
 						parent->rightChild->parent = grandparent;
 					}
@@ -197,12 +229,24 @@ void insert(Node **head, int value, int *size) {
 						}
 						grandparent->parent = parent;
 					} else {
+						grandparent->parent = parent;
 						*head = parent;
 						parent->parent = NULL;
 					}
 					grandparent->color = 1;
 					parent->color = 0;
+
+					parent = current->parent;
+					if (parent != *head) {
+						grandparent = parent->parent;
+						if (parent == grandparent->leftChild) {
+							uncle = grandparent->rightChild;
+						} else {
+							uncle = grandparent->leftChild;
+						}
+					} else break;
 				} else  {
+					printf("Else\n");
 					if (parent->leftChild != NULL) {
 						parent->leftChild->parent = grandparent;
 					}
@@ -210,26 +254,51 @@ void insert(Node **head, int value, int *size) {
 					parent->leftChild = grandparent;
 					if (grandparent != *head) {
 						parent->parent = grandparent->parent;
+						printf("before nested if\n");
 						if (grandparent == grandparent->parent->leftChild) {
+							printf("Nested if\n");
 							grandparent->parent->leftChild = parent;
 						} else {
+							printf("Nested else\n");
 							grandparent->parent->rightChild = parent;
 						}
+						printf("After nested if block\n");
 						grandparent->parent = parent;
 					} else {
 						*head = parent;
 						parent->parent = NULL;
+						grandparent->parent = parent;
 					}
 					grandparent->color = 1;
 					parent->color = 0;
+
+					printf("Made it to reassignment\n");
+					parent = current->parent;
+					if (parent != NULL) {
+						grandparent = parent->parent;
+						if (grandparent !=  NULL) {
+							if (parent == grandparent->leftChild) {
+								uncle = grandparent->rightChild;
+							} else {
+								uncle = grandparent->leftChild;
+							}
+						}
+					} else break;
 				}				
 			}
-			
 		}
+		return 1;
 		} else {
 			free(newNode);
+			return 0;
 		}
 	}
 }
 
+void freeAll(Node *head) {
+	printf("%d\n", head->data);
+	if (head->leftChild != NULL) freeAll(head->leftChild);
+	if (head->rightChild != NULL) freeAll(head->rightChild);
+	free(head);
+}
 
