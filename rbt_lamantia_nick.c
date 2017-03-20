@@ -9,8 +9,15 @@ typedef struct Node {
 	struct Node *rightChild;
 } Node;
 
+typedef struct Data {
+	int count;
+	int sum;
+} Data;
+
 void insert(Node **head, int value);
 void freeAll(Node *head);
+int height(Node *head);
+void countAndSumRanges(Node *head, Data *ranges);
 
 int main(void) {
 	char *color;
@@ -19,13 +26,68 @@ int main(void) {
 	while (scanf("%d\n", &value) != EOF) {
 		insert(&root, value);
 	}
-	printf("Root: %d\tColor: %d\n", (root)->data, (root)->color);
-	/*printf("Left Child: %d\tColor: %d\n", (root)->leftChild->data, (root)->leftChild->color);
-	printf("Right Child: %d\tColor: %d\n", (root)->rightChild->data, (root)->rightChild->color);
-	printf("Right Grandchild: %d\tColor: %d\n", (root)->rightChild->rightChild->data, (root)->rightChild->rightChild->color);*/
-	printf("Done\n");
+	Data *ranges = calloc(4, sizeof(Data));
+	countAndSumRanges(root, ranges);
+
+	printf("The number of nodes with key values in the range [0 - 1000] is %d\n", (ranges + 0)->count);
+	printf("The sum of the key values in the range [0 - 1000] is %d\n", (ranges  + 0)->sum);
+	printf("The number of nodes with key values in the range [1000 - 2000] is %d\n", (ranges + 1)->count);
+	printf("The sum of the key values in the range [1000 - 2000] is %d\n", (ranges  + 1)->sum);
+	printf("The number of nodes with key values in the range [2000 - 3000] is %d\n", (ranges + 2)->count);
+	printf("The sum of the key values in the range [2000 - 3000] is %d\n", (ranges  + 2)->sum);
+	printf("The number of nodes with key values in the range [3000 - 4000] is %d\n", (ranges + 3)->count);
+	printf("The sum of the key values in the range [3000 - 4000] is %d\n", (ranges + 3)->sum);
+	printf("The height of your resulting tree is %d\n", height(root));
+
 	freeAll(root);
+	free(ranges);
 	return(0);
+}
+
+int height(Node *head) {
+	int leftHeight = 0, rightHeight = 0;
+	if (head->leftChild == NULL) {
+		leftHeight = 0;
+	} else {
+		leftHeight += 1 + height(head->leftChild);
+	}
+
+	if (head->rightChild != NULL) {
+		rightHeight += 1 + height(head->rightChild);
+	} else {
+		rightHeight = 0;
+	}
+
+	if (rightHeight > leftHeight) {
+		return rightHeight;
+	} else {
+		return leftHeight;
+	}
+}
+
+void countAndSumRanges(Node *head, Data *ranges) {
+	if (head->leftChild != NULL) countAndSumRanges(head->leftChild, ranges);
+	if (head->rightChild != NULL) countAndSumRanges(head->rightChild, ranges);
+
+	if (head->data <= 1000) {
+		(ranges + 0)->count++;
+		(ranges + 0)->sum += head->data;
+	}
+
+	if (head->data >= 1000 && head->data <= 2000) {
+		(ranges + 1)->count++;
+		(ranges + 1)->sum += head->data;
+	}
+
+	if (head->data >= 2000 && head->data <= 3000) {
+		(ranges + 2)->count++;
+		(ranges + 2)->sum += head->data;
+	}
+
+	if (head->data >= 3000 && head->data <= 4000) {
+		(ranges + 3)->count++;
+		(ranges + 3)->sum += head->data;
+	}
 }
 
 void insert(Node **head, int value) {
@@ -78,7 +140,7 @@ void insert(Node **head, int value) {
 		parent = current->parent;
 		grandparent = parent->parent;
 
-		while (parent != NULL && parent->color == 1) {
+		while (current->color == 1 && parent->color == 1) {
 			if (parent == grandparent->leftChild) {
 				uncle = grandparent->rightChild;
 			} else {
